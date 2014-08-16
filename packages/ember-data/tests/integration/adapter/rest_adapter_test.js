@@ -40,6 +40,7 @@ function ajaxResponse(value) {
     return Ember.RSVP.resolve(value);
   };
 }
+/*
 
 test("find - basic payload", function() {
   ajaxResponse({ posts: [{ id: 1, name: "Rails is omakase" }] });
@@ -109,6 +110,7 @@ test("find - payload with sideloaded records of a different type", function() {
     equal(comment.get('name'), "FIRST");
   }));
 });
+
 
 test("find - payload with an serializer-specified primary key", function() {
   env.container.register('serializer:post', DS.RESTSerializer.extend({
@@ -1460,3 +1462,4 @@ test('groupRecordsForFindMany groups calls for small ids', function() {
 
   post.get('comments');
 });
+*/

@@ -5,12 +5,13 @@ var Promise = Ember.RSVP.Promise;
 
 import { Model } from 'ember-data/system/model';
 import { PromiseObject } from 'ember-data/system/store';
-import { RelationshipChange } from 'ember-data/system/changes';
 import {
   relationshipFromMeta,
   typeForRelationshipMeta,
   isSyncRelationship
 } from 'ember-data/system/relationship-meta';
+import { createRelationshipFor} from "ember-data/system/relationships/relationship";
+
 
 /**
   @module ember-data
@@ -126,29 +127,42 @@ function belongsTo(type, options) {
     return asyncBelongsTo(type, options, meta);
   }
 
-  return Ember.computed('data', function(key, value) {
-    var data = get(this, 'data');
-    var store = get(this, 'store');
-    var belongsTo, typeClass;
+  return Ember.computed(function(key, value) {
+    if (arguments.length>1) {
+      //TODO(Igor) bring back the assert
+      //Ember.assert("You can only add a '" + type + "' record to this relationship", !value || value instanceof typeClass);
+      if(this._relationships[key]){
+        this._relationships[key].removeRecord(this);
+      }
 
-    if (typeof type === 'string') {
-      typeClass = store.modelFor(type);
-    } else {
-      typeClass = type;
+      if (value){
+        this._relationships[key] = createRelationshipFor(this, meta, this.store);
+
+        var inverse = this.inverseFor(key);
+
+        if(inverse){
+          if(value._relationships[inverse.name]){
+            this._relationships[key] = value._relationships[inverse.name];
+          }
+          else{
+            //In this case the other record isn't on the relationship so we need to add it
+            value._relationships[inverse.name] = this._relationships[key];
+            this._relationships[key].addRecord(value, this);
+          }
+        }
+
+        this._relationships[key].addRecord(this, value);
+      }
+
+      return value;
     }
 
-    if (arguments.length === 2) {
-      Ember.assert("You can only add a '" + type + "' record to this relationship", !value || value instanceof typeClass);
-      return value === undefined ? null : value;
+    if (this._relationships[key]) {
+      return this._relationships[key].getOtherSideFor(this);
     }
 
-    belongsTo = data[key];
+    return null;
 
-    if (isNone(belongsTo)) { return null; }
-
-    store.findById(belongsTo.constructor, belongsTo.get('id'));
-
-    return belongsTo;
   }).meta(meta);
 }
 
@@ -160,57 +174,15 @@ function belongsTo(type, options) {
   @namespace DS
 */
 Model.reopen({
+  notifyBelongsToAdded: function(key, relationship) {
+    this._relationships[key] = relationship;
+    this.notifyPropertyChange(key);
+  },
 
-  /**
-    @method belongsToWillChange
-    @private
-    @static
-    @param record
-    @param key
-  */
-  belongsToWillChange: Ember.beforeObserver(function(record, key) {
-    if (get(record, 'isLoaded') && isSyncRelationship(record, key)) {
-      var oldParent = get(record, key);
-
-      if (oldParent) {
-        var store = get(record, 'store');
-        var change = RelationshipChange.createChange(record, oldParent, store, {
-          key: key,
-          kind: 'belongsTo',
-          changeType: 'remove'
-        });
-
-        change.sync();
-        this._changesToSync[key] = change;
-      }
-    }
-  }),
-
-  /**
-    @method belongsToDidChange
-    @private
-    @static
-    @param record
-    @param key
-  */
-  belongsToDidChange: Ember.immediateObserver(function(record, key) {
-    if (get(record, 'isLoaded')) {
-      var newParent = get(record, key);
-
-      if (newParent) {
-        var store = get(record, 'store');
-        var change = RelationshipChange.createChange(record, newParent, store, {
-          key: key,
-          kind: 'belongsTo',
-          changeType: 'add'
-        });
-
-        change.sync();
-      }
-    }
-
-    delete this._changesToSync[key];
-  })
+  notifyBelongsToRemoved: function(key) {
+    this._relationships[key] = null;
+    this.notifyPropertyChange(key);
+  }
 });
 
 export default belongsTo;

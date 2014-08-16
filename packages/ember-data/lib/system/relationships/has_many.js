@@ -3,6 +3,8 @@
 */
 
 import { PromiseArray } from "ember-data/system/store";
+import { Model } from "ember-data/system/model";
+import { OneToMany} from "ember-data/system/relationships/relationship";
 
 import {
   relationshipFromMeta,
@@ -211,11 +213,36 @@ function hasMany(type, options) {
     key: null
   };
 
+  return Ember.computed(function(key) {
+    //TODO(Igor) encapsulate better
+    var relationship = this._relationships[key];
+    if (!relationship){
+      relationship = new OneToMany(this, type, this.store, null, key);
+      this._relationships[key] = relationship;
+    }
+    return relationship.manyArray;
+  }).meta(meta);
+  /*
   if (options.async) {
     return asyncHasMany(type, options, meta);
   } else {
     return syncHasMany(type, options, meta);
   }
+  */
 }
+
+Model.reopen({
+  notifyHasManyAdded: function(key, record) {
+    var manyArray = get(this, key);
+    //TODO(Igor) double check with yehuda whether this is the correct method
+    manyArray.addRecord(record);
+  },
+
+  notifyHasManyRemoved: function(key, record) {
+    var manyArray = get(this, key);
+    manyArray.removeRecord(record);
+  }
+});
+
 
 export default hasMany;

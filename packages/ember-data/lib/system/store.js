@@ -10,6 +10,12 @@ import {
   Adapter
 } from "ember-data/system/adapter";
 import { singularize } from "ember-inflector/system/string";
+import {
+  Relationship,
+  createRelationshipFor,
+  OneToMany
+} from "ember-data/system/relationships/relationship";
+
 
 var get = Ember.get;
 var set = Ember.set;
@@ -687,38 +693,6 @@ Store = Ember.Object.extend({
   },
 
   /**
-    @method findMany
-    @private
-    @param {DS.Model} owner
-    @param {Array} records
-    @param {String or subclass of DS.Model} type
-    @param {Resolver} resolver
-    @return {DS.ManyArray} records
-  */
-  findMany: function(owner, inputRecords, typeName, resolver) {
-    var type = this.modelFor(typeName);
-    var records = Ember.A(inputRecords);
-    var unloadedRecords = records.filterProperty('isEmpty', true);
-    var manyArray = this.recordArrayManager.createManyArray(type, records);
-
-    manyArray.loadingRecordsCount = unloadedRecords.length;
-
-    if (unloadedRecords.length) {
-      forEach(unloadedRecords, function(record) {
-        this.recordArrayManager.registerWaitingRecordArray(record, manyArray);
-      }, this);
-
-      resolver.resolve(this.scheduleFetchMany(unloadedRecords, owner));
-    } else {
-      if (resolver) { resolver.resolve(); }
-      manyArray.set('isLoaded', true);
-      once(manyArray, 'trigger', 'didLoad');
-    }
-
-    return manyArray;
-  },
-
-  /**
     If a relationship was originally populated by the adapter as a link
     (as opposed to a list of IDs), this method is called when the
     relationship is fetched.
@@ -1289,21 +1263,39 @@ Store = Ember.Object.extend({
     @return {DS.Model} the record that was created or
       updated.
   */
-  push: function(typeName, data, _partial) {
+  push: function(typeName, data, _partial, _inverse) {
     // _partial is an internal param used by `update`.
     // If passed, it means that the data should be
     // merged into the existing data, not replace it.
+
+    // _inverse is an internal param that indicates what
+    // the inverse record is. It is passed through when
+    // a record is pushed in response to a findMany.
+
 
     Ember.assert("You must include an `id` for " + typeName+ " in a hash passed to `push`", data.id != null);
 
     var type = this.modelFor(typeName);
 
-    // normalize relationship IDs into records
+    // If the payload contains relationships that are specified as
+    // IDs, normalizeRelationships will convert them into DS.Model instances
+    // (possibly unloaded) before we push the payload into the
+    // store.
+
     data = normalizeRelationships(this, type, data);
+
+    // Actually load the record into the store.
 
     this._load(type, data, _partial);
 
-    return this.recordForId(type, data.id);
+    var record = this.recordForId(type, data.id);
+
+    // Now that the pushed record as well as any related records
+    // are in the store, create the data structures used to track
+    // relationships.
+    setupRelationships(this, record, data, _inverse);
+
+    return record;
   },
 
   /**
@@ -1437,9 +1429,9 @@ Store = Ember.Object.extend({
     @param {Array} datas
     @return {Array}
   */
-  pushMany: function(type, datas) {
+  pushMany: function(type, datas, _inverse) {
     return map(datas, function(data) {
-      return this.push(type, data);
+      return this.push(type, data, false, _inverse);
     }, this);
   },
 
@@ -1525,59 +1517,6 @@ Store = Ember.Object.extend({
     typeMap.records.splice(loc, 1);
   },
 
-  // ........................
-  // . RELATIONSHIP CHANGES .
-  // ........................
-
-  addRelationshipChangeFor: function(childRecord, childKey, parentRecord, parentKey, change) {
-    var clientId = childRecord.clientId;
-    var parentClientId = parentRecord ? parentRecord : parentRecord;
-    var key = childKey + parentKey;
-    var changes = this._relationshipChanges;
-
-    if (!(clientId in changes)) {
-      changes[clientId] = {};
-    }
-    if (!(parentClientId in changes[clientId])) {
-      changes[clientId][parentClientId] = {};
-    }
-    if (!(key in changes[clientId][parentClientId])) {
-      changes[clientId][parentClientId][key] = {};
-    }
-    changes[clientId][parentClientId][key][change.changeType] = change;
-  },
-
-  removeRelationshipChangeFor: function(clientRecord, childKey, parentRecord, parentKey, type) {
-    var clientId = clientRecord.clientId;
-    var parentClientId = parentRecord ? parentRecord.clientId : parentRecord;
-    var changes = this._relationshipChanges;
-    var key = childKey + parentKey;
-
-    if (!(clientId in changes) || !(parentClientId in changes[clientId]) || !(key in changes[clientId][parentClientId])){
-      return;
-    }
-    delete changes[clientId][parentClientId][key][type];
-  },
-
-  relationshipChangePairsFor: function(record){
-    var toReturn = [];
-
-    if( !record ) { return toReturn; }
-
-    //TODO(Igor) What about the other side
-    var changesObject = this._relationshipChanges[record.clientId];
-    for (var objKey in changesObject){
-      if (changesObject.hasOwnProperty(objKey)){
-        for (var changeKey in changesObject[objKey]){
-          if (changesObject[objKey].hasOwnProperty(changeKey)){
-            toReturn.push(changesObject[objKey][changeKey]);
-          }
-        }
-      }
-    }
-    return toReturn;
-  },
-
   // ......................
   // . PER-TYPE ADAPTERS
   // ......................
@@ -1658,6 +1597,16 @@ Store = Ember.Object.extend({
     return camelize(singularize(key));
   }
 });
+
+function relationshipFor(kind, record, key, store) {
+  if (record._relationships[key]) {
+    return record._relationships[key];
+  }
+
+  return record._relationships[key] = new OneToMany(record, null, store);
+}
+
+
 
 function normalizeRelationships(store, type, data, record) {
   type.eachRelationship(function(key, relationship) {
@@ -2019,6 +1968,66 @@ function _commit(adapter, store, operation, record) {
     throw reason;
   }, label);
 }
+
+function setupRelationships(store, record, data, inverseRecord) {
+  // inverseRecord is an inverse that is passed through when a record was
+  // originally fetched (via findMany, for example) through its inverse,
+  // and therefore should be considered the inverse of that record even if
+  // it's not provided in the data.
+
+  var type = record.constructor;
+
+  type.eachRelationship(function(key, descriptor) {
+  var kind = descriptor.kind,
+        value = data[key] || inverseRecord,
+        relationship,
+        inverse, currentValue;
+
+    if (kind === 'belongsTo') {
+      inverse = record.inverseFor(key);
+      if (record._relationships[key]){
+        currentValue = record._relationships[key].getOtherSideFor(record);
+      }
+
+      //TODO(IGOR_ASK) Null vs undefined??
+      if (currentValue === value){
+        return;
+      }
+
+      if (record._relationships[key]){
+        record._relationships[key].removeAllRecords();
+      }
+
+      //We are adding data
+      //TODO(Igor) probably should move to somewhere else to unify with
+      //belongsTo setter
+      if(value){
+        record._relationships[key] = DS.createRelationshipFor(record, descriptor, this);
+
+        if (inverse) {
+          if(value._relationships[inverse.name]){
+            record._relationships[key] = value._relationships[inverse.name];
+          }
+          else{
+            value._relationships[inverse.name] = record._relationships[key];
+            record._relationships[key].addRecord(value, record);
+          }
+        }
+
+        record._relationships[key].addRecord(record, value);
+      }
+    } else if (kind === 'hasMany') {
+      relationship = relationshipFor(kind, record, key, store);
+      var delta = relationship.computeChanges(data[key]);
+
+      inverse = record.inverseFor(key);
+
+      relationship.addRecords(delta.added);
+      relationship.removeRecords(delta.removed);
+    }
+  });
+}
+
 
 export {
   Store,

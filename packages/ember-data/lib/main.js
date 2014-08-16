@@ -23,16 +23,6 @@ import {
   attr
 } from "ember-data/system/model";
 import {
-  AttributeChange,
-  RelationshipChange,
-  RelationshipChangeAdd,
-  RelationshipChangeRemove,
-  OneToManyChange,
-  ManyToNoneChange,
-  OneToOneChange,
-  ManyToManyChange
-} from "ember-data/system/changes";
-import {
   InvalidError,
   Adapter
 } from "ember-data/system/adapter";
@@ -79,14 +69,6 @@ DS.Model     = Model;
 DS.RootState = RootState;
 DS.attr      = attr;
 DS.Errors    = Errors;
-
-DS.AttributeChange       = AttributeChange;
-DS.RelationshipChange    = RelationshipChange;
-DS.RelationshipChangeAdd = RelationshipChangeAdd;
-DS.OneToManyChange       = OneToManyChange;
-DS.ManyToNoneChange      = OneToManyChange;
-DS.OneToOneChange        = OneToOneChange;
-DS.ManyToManyChange      = ManyToManyChange;
 
 DS.Adapter      = Adapter;
 DS.InvalidError = InvalidError;
