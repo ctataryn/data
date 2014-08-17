@@ -1170,7 +1170,7 @@ function fetchHasMany(record, key, relationship) {
   //     tell the adapter to fetch that URL.
 
   var unloadedRecords = hasMany.unloadedMembers();
-  var loadRecordsPromise = store.fetchMany(unloadedRecords, record);
+  var loadRecordsPromise = store.scheduleFetchMany(unloadedRecords, record);
 
   if (!isNone(link)) {
     linkPromise = store.findHasMany(this, link, relationship);

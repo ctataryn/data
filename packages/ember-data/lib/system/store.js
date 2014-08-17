@@ -2002,7 +2002,7 @@ function setupRelationships(store, record, data, inverseRecord) {
       //TODO(Igor) probably should move to somewhere else to unify with
       //belongsTo setter
       if(value){
-        record._relationships[key] = DS.createRelationshipFor(record, descriptor, this);
+        record._relationships[key] = createRelationshipFor(record, descriptor, store);
 
         if (inverse) {
           if(value._relationships[inverse.name]){
@@ -2017,7 +2017,7 @@ function setupRelationships(store, record, data, inverseRecord) {
         record._relationships[key].addRecord(record, value);
       }
     } else if (kind === 'hasMany') {
-      relationship = relationshipFor(kind, record, key, store);
+      relationship = createRelationshipFor(record, descriptor, store);
       var delta = relationship.computeChanges(data[key]);
 
       inverse = record.inverseFor(key);

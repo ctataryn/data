@@ -13,6 +13,11 @@ var Relationship = function(hasManyRecord, manyType, store, belongsToName, manyN
 Relationship.prototype = {
   constructor: Relationship,
 
+  //TODO(Igor) implement
+  destroy: function(){
+    
+  },
+
   computeChanges: function(records) {
     // returns { added: [], removed: [] }
     var added = new Ember.OrderedSet(),
