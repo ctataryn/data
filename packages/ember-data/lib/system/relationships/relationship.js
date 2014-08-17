@@ -15,7 +15,6 @@ Relationship.prototype = {
 
   //TODO(Igor) implement
   destroy: function(){
-    
   },
 
   computeChanges: function(records) {
@@ -67,14 +66,34 @@ Relationship.prototype = {
     });
   },
 
-  getOtherSideFor: function(record){
-    return null;
+  getOtherSideFor: function(record, isAsync){
+    return this.getRecord(this.currentOtherSideFor(record), isAsync);
   },
 
   removeAllRecords: function(){
     //TODO(Igor) this is temp, make sure it works for hasmany
     if (this.inverseRecord){
       this.removeRecord(this.inverseRecord);
+    }
+  },
+
+  currentOtherSideFor: function(record) {
+    return undefined;
+  },
+
+  hasOtherSideFor: function(record){
+    return !!this.currentOtherSideFor(record);
+  },
+
+  getRecord: function(record, isAsync) {
+    if (!record){
+      return null;
+    }
+    if (isAsync) {
+      return this.store._findByRecord(record);
+    } else {
+      //TODO(Igor) assert that we actually have it
+      return record;
     }
   }
 };
@@ -102,9 +121,11 @@ OneToMany.prototype.removeRecord = function(record) {
   record.notifyBelongsToRemoved(this.belongsToName, this);
 };
 
-OneToMany.prototype.getOtherSideFor = function(record) {
+OneToMany.prototype.currentOtherSideFor = function(record) {
   return this.hasManyRecord;
 };
+
+
 
 var OneToOne = function(record, manyType, store, inverseKey, originalKey) {
   Relationship.apply(this, arguments);
@@ -163,7 +184,7 @@ OneToOne.prototype.removeRecord = function(record) {
   }
 };
 
-OneToOne.prototype.getOtherSideFor = function(record) {
+OneToOne.prototype.currentOtherSideFor = function(record) {
   if (record === this.originalRecord){
     return this.inverseRecord;
   }
@@ -249,6 +270,7 @@ var createRelationshipFor = function(record, knownSide, store){
       return new OneToOne(record, recordType, store, inverse.name, knownSide.key);
     }
     else {
+      //return new OneToMany(record, recordType, store, inverse.name, knownSide.key);
       //TODO(Igor) think abot, maybe will be set on many side, maybe not
       return null;
     }

@@ -123,14 +123,18 @@ function belongsTo(type, options) {
     key: null
   };
 
+  /*
   if (options.async) {
     return asyncBelongsTo(type, options, meta);
   }
+  */
 
   return Ember.computed(function(key, value) {
+    var store = get(this, 'store');
+    var data = get(this, 'data');
+
     if (arguments.length>1) {
-      //TODO(Igor) bring back the assert
-      //Ember.assert("You can only add a '" + type + "' record to this relationship", !value || value instanceof typeClass);
+      Ember.assert("You can only add a '" + type + "' record to this relationship", !value || value instanceof typeForRelationshipMeta(store, meta));
       if(this._relationships[key]){
         this._relationships[key].removeRecord(this);
       }
@@ -157,10 +161,14 @@ function belongsTo(type, options) {
       return value;
     }
 
-    if (this._relationships[key]) {
-      return this._relationships[key].getOtherSideFor(this);
+    var link = data.links && data.links[key];
+    if (this._relationships[key] && this._relationships[key].hasOtherSideFor(this)) {
+      return this._relationships[key].getOtherSideFor(this, options.async);
+    } else if (link) {
+      return store.findBelongsTo(this, link, relationshipFromMeta(store, meta));
     }
 
+    //Promise null
     return null;
 
   }).meta(meta);
