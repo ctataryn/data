@@ -1,3 +1,4 @@
+import { PromiseArray } from "ember-data/system/promise_proxies";
 
 var Relationship = function(hasManyRecord, manyType, store, belongsToName, manyName) {
 
@@ -98,7 +99,13 @@ Relationship.prototype = {
   },
 
   getManyArray: function(isAsync) {
-    return this.manyArray;
+    if (isAsync) {
+      return PromiseArray.create({
+        promise: Ember.RSVP.cast(this.manyArray)
+      });
+    } else {
+      return this.manyArray;
+   }
   },
 
   //for hasMany only

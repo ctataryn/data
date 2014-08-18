@@ -16,6 +16,13 @@ import {
   OneToMany
 } from "ember-data/system/relationships/relationship";
 
+import {
+  PromiseArray,
+  PromiseObject,
+  promiseArray,
+  promiseObject
+} from "ember-data/system/promise_proxies";
+
 
 var get = Ember.get;
 var set = Ember.set;
@@ -26,7 +33,7 @@ var indexOf = Ember.EnumerableUtils.indexOf;
 var map = Ember.EnumerableUtils.map;
 var Promise = Ember.RSVP.Promise;
 var copy = Ember.copy;
-var Store, PromiseObject, PromiseArray, RecordArrayManager, Model;
+var Store, RecordArrayManager, Model;
 
 var camelize = Ember.String.camelize;
 
@@ -1691,78 +1698,7 @@ function uniqById(data, records) {
 }
 
 // Delegation to the adapter and promise management
-/**
-  A `PromiseArray` is an object that acts like both an `Ember.Array`
-  and a promise. When the promise is resolved the resulting value
-  will be set to the `PromiseArray`'s `content` property. This makes
-  it easy to create data bindings with the `PromiseArray` that will be
-  updated when the promise resolves.
 
-  For more information see the [Ember.PromiseProxyMixin
-  documentation](/api/classes/Ember.PromiseProxyMixin.html).
-
-  Example
-
-  ```javascript
-  var promiseArray = DS.PromiseArray.create({
-    promise: $.getJSON('/some/remote/data.json')
-  });
-
-  promiseArray.get('length'); // 0
-
-  promiseArray.then(function() {
-    promiseArray.get('length'); // 100
-  });
-  ```
-
-  @class PromiseArray
-  @namespace DS
-  @extends Ember.ArrayProxy
-  @uses Ember.PromiseProxyMixin
-*/
-PromiseArray = Ember.ArrayProxy.extend(Ember.PromiseProxyMixin);
-/**
-  A `PromiseObject` is an object that acts like both an `Ember.Object`
-  and a promise. When the promise is resolved, then the resulting value
-  will be set to the `PromiseObject`'s `content` property. This makes
-  it easy to create data bindings with the `PromiseObject` that will
-  be updated when the promise resolves.
-
-  For more information see the [Ember.PromiseProxyMixin
-  documentation](/api/classes/Ember.PromiseProxyMixin.html).
-
-  Example
-
-  ```javascript
-  var promiseObject = DS.PromiseObject.create({
-    promise: $.getJSON('/some/remote/data.json')
-  });
-
-  promiseObject.get('name'); // null
-
-  promiseObject.then(function() {
-    promiseObject.get('name'); // 'Tomster'
-  });
-  ```
-
-  @class PromiseObject
-  @namespace DS
-  @extends Ember.ObjectProxy
-  @uses Ember.PromiseProxyMixin
-*/
-PromiseObject = Ember.ObjectProxy.extend(Ember.PromiseProxyMixin);
-
-function promiseObject(promise, label) {
-  return PromiseObject.create({
-    promise: Promise.cast(promise, label)
-  });
-}
-
-function promiseArray(promise, label) {
-  return PromiseArray.create({
-    promise: Promise.cast(promise, label)
-  });
-}
 
 function isThenable(object) {
   return object && typeof object.then === 'function';
@@ -2032,11 +1968,5 @@ function setupRelationships(store, record, data, inverseRecord) {
   });
 }
 
-
-export {
-  Store,
-  PromiseArray,
-  PromiseObject
-};
-
+export { Store };
 export default Store;

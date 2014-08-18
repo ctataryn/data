@@ -12,9 +12,11 @@ import DS from "ember-data/core";
 import "ember-data/ext/date";
 
 import {
-  Store,
   PromiseArray,
   PromiseObject
+} from "ember-data/system/promise_proxies";
+import {
+  Store
 } from "ember-data/system/store";
 import {
   Model,

@@ -2,7 +2,7 @@
   @module ember-data
 */
 
-import { PromiseArray } from "ember-data/system/store";
+import { PromiseArray } from "ember-data/system/promise_proxies";
 import { Model } from "ember-data/system/model";
 import { OneToMany} from "ember-data/system/relationships/relationship";
 
@@ -220,7 +220,7 @@ function hasMany(type, options) {
       relationship = new OneToMany(this, type, this.store, null, key);
       this._relationships[key] = relationship;
     }
-    return relationship.manyArray;
+    return relationship.getManyArray(options.async);
   }).meta(meta);
   /*
   if (options.async) {

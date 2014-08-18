@@ -4,7 +4,7 @@ var isNone = Ember.isNone;
 var Promise = Ember.RSVP.Promise;
 
 import { Model } from 'ember-data/system/model';
-import { PromiseObject } from 'ember-data/system/store';
+import { PromiseObject } from 'ember-data/system/promise_proxies';
 import {
   relationshipFromMeta,
   typeForRelationshipMeta,
