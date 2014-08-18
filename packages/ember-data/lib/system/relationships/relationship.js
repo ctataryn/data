@@ -281,6 +281,10 @@ OneToNone.prototype.addRecord = function(record){
   this.originalRecord.notifyBelongsToAdded(this.originalKey, this);
 };
 
+OneToNone.prototype.currentOtherSideFor = function(record) {
+  return this.inverseRecord;
+};
+
 
 var ManyToNone = function(hasManyRecord, manyType, store, belongsToName, manyName, belongsToType, options) {
   Relationship.apply(this, arguments);

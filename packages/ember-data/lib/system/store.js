@@ -1931,7 +1931,7 @@ function setupRelationships(store, record, data, inverseRecord) {
     if (kind === 'belongsTo') {
       inverse = record.inverseFor(key);
       if (relationship){
-        currentValue = relationship.getOtherSideFor(record);
+        currentValue = relationship.currentOtherSideFor(record);
       }
 
       //TODO(IGOR_ASK) Null vs undefined??
@@ -1957,9 +1957,9 @@ function setupRelationships(store, record, data, inverseRecord) {
             value._relationships[inverse.name] = record._relationships[key];
             record._relationships[key].addRecord(value, record);
           }
+        } else {
+          record._relationships[key].addRecord(value, record);
         }
-
-        record._relationships[key].addRecord(record, value);
       }
     } else if (kind === 'hasMany') {
       if (!relationship) {
