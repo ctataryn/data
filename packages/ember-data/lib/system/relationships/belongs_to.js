@@ -135,6 +135,9 @@ function belongsTo(type, options) {
 
     if (arguments.length>1) {
       Ember.assert("You can only add a '" + type + "' record to this relationship", !value || value instanceof typeForRelationshipMeta(store, meta));
+      if ( value === undefined ) {
+        value = null;
+      }
       if(this._relationships[key]){
         this._relationships[key].removeRecord(this);
       }
