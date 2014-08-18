@@ -633,10 +633,10 @@ var Model = Ember.Object.extend(Ember.Evented, {
   clearRelationships: function() {
     this.eachRelationship(function(name, relationship) {
       var rel = this._relationships[name];
-      if (rel) { // relationships are created lazily
+      if (rel){
+        rel.removeRecord(this);
         rel.destroy();
       }
-      this._relationships[name]  = null;
     }, this);
   },
 
