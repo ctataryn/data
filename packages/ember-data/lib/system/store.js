@@ -1952,6 +1952,7 @@ function setupRelationships(store, record, data, inverseRecord) {
         if (inverse) {
           if(value._relationships[inverse.name]){
             record._relationships[key] = value._relationships[inverse.name];
+            record._relationships[key].addRecord(record, value);
           }
           else{
             value._relationships[inverse.name] = record._relationships[key];
