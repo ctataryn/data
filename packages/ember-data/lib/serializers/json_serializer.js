@@ -633,7 +633,7 @@ export default Ember.Object.extend({
         payloadKey = this.keyForRelationship(key, "hasMany");
       }
 
-      var relationshipType = record.constructor.determineRelationshipType(record.constructor, relationship);
+      var relationshipType = record.constructor.determineRelationshipType(relationship);
 
       if (relationshipType === 'manyToNone' || relationshipType === 'manyToMany') {
         json[payloadKey] = get(record, key).mapBy('id');
