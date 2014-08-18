@@ -310,28 +310,6 @@ var Model = Ember.Object.extend(Ember.Evented, {
   */
   currentState: RootState.empty,
 
-   /**
-    Tells a record to fetch a relationship. This method returns a promise for
-    the relationship. If it is a belongs-to relationship, it will resolve with
-    a single record; otherwise, it will resolve with a `ManyArray` of records.
-
-    @method fetch
-    @param {String} relationshipName the name of the relationship to fetch
-  */
-  fetch: function(relationshipName) {
-    console.log("ttrrrrr");
-    var relationship = this.relationshipFor(relationshipName),
-        kind = relationship.kind;
-
-    if (kind === 'hasMany') {
-      return fetchHasMany(this, relationshipName, relationship);
-    } else if (kind === 'belongsTo') {
-      return fetchBelongsTo(this, relationshipName, relationship);
-    }
-  },
-
-
-
   /**
     When the record is in the `invalid` state this object will contain
     any errors returned by the adapter. When present the errors hash
@@ -1135,52 +1113,5 @@ Model.reopenClass({
     throw new Ember.Error("You should not call `create` on a model. Instead, call `store.createRecord` with the attributes you would like to set.");
   }
 });
-
-function fetchBelongsTo(model, key, relationship) {
-  var data = get(model, 'data'),
-      store = get(model, 'store'),
-      promiseLabel = "DS: Fetching belongs-to " + model + " : " + key;
-
-  var link = data.links && data.links[key],
-      belongsTo = data[key];
-
-  if (!isNone(belongsTo)) {
-    var promise = store.fetchRecord(belongsTo) || Ember.RSVP.resolve(belongsTo, promiseLabel);
-    return PromiseObject.create({ promise: promise });
-  } else if (link) {
-    var resolver = Ember.RSVP.defer("DS: fetching belongs-to from link (" + link + ") " + this + " : " + key);
-    store.findBelongsTo(this, link, relationship, resolver);
-    return PromiseObject.create({ promise: resolver.promise });
-  } else {
-    return;
-  }
-}
-
-function fetchHasMany(record, key, relationship) {
-  var data = get(record, 'data'),
-      store = get(record, 'store'),
-      promiseLabel = "DS: Fetching has-many " + record + " : " + key;
-
-  var link = data.links && data.links[key],
-      hasMany = record._relationships[key],
-      linkPromise;
-
-  // When fetching a has-many relationship, there are several sources
-  // we must consider before resolving the returned promise. They are:
-  //  1. Any unloaded records that exist in the OneToMany's set.
-  //  2. If the has-many was specified as a URL in the `links` hash,
-  //     tell the adapter to fetch that URL.
-
-  var unloadedRecords = hasMany.unloadedMembers();
-  var loadRecordsPromise = store.scheduleFetchMany(unloadedRecords, record);
-
-  if (!isNone(link)) {
-    linkPromise = store.findHasMany(this, link, relationship);
-  }
-
-  return Ember.RSVP.all([ loadRecordsPromise, linkPromise ]).then(function() {
-    return get(record, key);
-  });
-}
 
 export default Model;
