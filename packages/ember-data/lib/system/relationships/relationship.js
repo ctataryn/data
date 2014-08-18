@@ -104,8 +104,8 @@ Relationship.prototype = {
 
   getManyArray: function(isAsync) {
     if (isAsync) {
+      var self = this;
       if (this.hasManyLink && !this.hasFetchedLink){
-        var self = this;
         return this.store.findHasMany(this.hasManyRecord, this.hasManyLink, this.belongsToType).then(function(records){
           self.updateRecordsFromServer(records);
           self.hasFetchedLink = true;
@@ -116,6 +116,7 @@ Relationship.prototype = {
       } else {
         var manyArray = this.manyArray;
         var promise = this.store.findMany(manyArray.toArray()).then(function(){
+          self.manyArray.set('isLoaded', true);
           return manyArray;
         });
         return PromiseArray.create({
@@ -123,6 +124,7 @@ Relationship.prototype = {
         });
       }
     } else {
+      this.manyArray.set('isLoaded', true);
       return this.manyArray;
    }
   },
