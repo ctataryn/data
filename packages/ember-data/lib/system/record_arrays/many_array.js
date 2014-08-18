@@ -153,7 +153,7 @@ export default RecordArray.extend({
   */
   createRecord: function(hash) {
     var owner = get(this, 'owner');
-    var store = get(owner, 'store');
+    var store = get(this, 'store');
     var type = get(this, 'type');
     var record;
 

@@ -146,12 +146,14 @@ Relationship.prototype = {
   }
 };
 
-var OneToMany = function(hasManyRecord, manyType, store, belongsToName, manyName, belongsToType) {
+var OneToMany = function(hasManyRecord, manyType, store, belongsToName, manyName, belongsToType, options) {
   Relationship.apply(this, arguments);
   this.belongsToType = belongsToType;
   this.manyType = manyType;
-  this.manyArray = store.recordArrayManager.createManyArray(manyType, Ember.A());
+  this.manyArray = store.recordArrayManager.createManyArray(belongsToType, Ember.A());
   this.manyArray.relationship = this;
+  this.isPolymorphic = options.polymorphic;
+  this.manyArray.isPolymorphic = this.isPolymorphic;
 };
 
 OneToMany.prototype = Object.create(Relationship.prototype);
@@ -261,11 +263,15 @@ OneToNone.prototype.addRecord = function(record){
 };
 
 
-var ManyToNone = function(hasManyRecord, manyType, store, belongsToName, manyName) {
+var ManyToNone = function(hasManyRecord, manyType, store, belongsToName, manyName, belongsToType, options) {
   Relationship.apply(this, arguments);
   this.manyType = manyType;
+  this.belongsToType = belongsToType;
+  this.isPolymorphic = options.polymorphic;
   this.manyArray = store.recordArrayManager.createManyArray(manyType, Ember.A());
   this.manyArray.relationship = this;
+  //TODO(Igor) refactor the creation
+  this.manyArray.isPolymorphic = this.isPolymorphic;
 };
 
 ManyToNone.prototype = Object.create(Relationship.prototype);
@@ -299,21 +305,22 @@ var createRelationshipFor = function(record, knownSide, store){
   var recordType = record.constructor;
   var knownKey = knownSide.key;
   var inverse = recordType.inverseFor(knownKey);
+  var options = knownSide.options;
 
   if (!inverse){
     if (knownSide.kind === 'belongsTo'){
       return new OneToNone(record, recordType, store, null, knownSide.key);
     } else {
-      return new ManyToNone(record, recordType, store, null, knownSide.key);
+      return new ManyToNone(record, recordType, store, null, knownSide.key, knownSide.type, options);
     }
   }
 
   if (knownSide.kind === 'hasMany'){
     if (inverse.kind === 'belongsTo'){
-      return new OneToMany(record, recordType, store, inverse.name, knownSide.key, inverse.type);
+      return new OneToMany(record, recordType, store, inverse.name, knownSide.key, knownSide.type, options);
     } else {
       //return ManyToMany(record, recordType, store, inverse.key, knowSide.key);
-      return new OneToMany(record, recordType, store, inverse.name, knownSide.key, inverse.type);
+      return new OneToMany(record, recordType, store, inverse.name, knownSide.key, knownSide.type, options);
     }
   }
   else {
