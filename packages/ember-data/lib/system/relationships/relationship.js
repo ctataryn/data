@@ -103,7 +103,7 @@ Relationship.prototype = {
     if (isAsync) {
       if (this.hasManyLink && !this.hasFetchedLink){
         var self = this;
-        return this.store.findHasMany(this, this.hasManyLink, this.manyType).then(function(records){
+        return this.store.findHasMany(this.hasManyRecord, this.hasManyLink, this.belongsToType).then(function(records){
           self.updateRecordsFromServer(records);
           self.hasFetchedLink = true;
           //TODO(Igor) try to abstract the isLoaded part
@@ -146,8 +146,9 @@ Relationship.prototype = {
   }
 };
 
-var OneToMany = function(hasManyRecord, manyType, store, belongsToName, manyName) {
+var OneToMany = function(hasManyRecord, manyType, store, belongsToName, manyName, belongsToType) {
   Relationship.apply(this, arguments);
+  this.belongsToType = belongsToType;
   this.manyType = manyType;
   this.manyArray = store.recordArrayManager.createManyArray(manyType, Ember.A());
   this.manyArray.relationship = this;
@@ -157,6 +158,8 @@ OneToMany.prototype = Object.create(Relationship.prototype);
 
 OneToMany.prototype.constructor = OneToMany;
 OneToMany.prototype.addRecord = function(record) {
+      Ember.assert("You cannot add '" + record.constructor.typeKey + "' records to this relationship (only '" + this.belongsToType.typeKey + "' allowed)", !this.belongsToType || record instanceof this.belongsToType);
+
   //TODO(Igor) Consider making the many array just a proxy over the members set
   this.members.add(record);
   this.hasManyRecord.notifyHasManyAdded(this.manyName, record);
@@ -307,10 +310,10 @@ var createRelationshipFor = function(record, knownSide, store){
 
   if (knownSide.kind === 'hasMany'){
     if (inverse.kind === 'belongsTo'){
-      return new OneToMany(record, recordType, store, inverse.name, knownSide.key);
+      return new OneToMany(record, recordType, store, inverse.name, knownSide.key, inverse.type);
     } else {
       //return ManyToMany(record, recordType, store, inverse.key, knowSide.key);
-      return new OneToMany(record, recordType, store, inverse.name, knownSide.key);
+      return new OneToMany(record, recordType, store, inverse.name, knownSide.key, inverse.type);
     }
   }
   else {

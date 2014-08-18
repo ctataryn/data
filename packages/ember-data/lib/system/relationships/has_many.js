@@ -221,7 +221,7 @@ function hasMany(type, options) {
       this._relationships[key] = relationship;
     }
     return relationship.getManyArray(options.async);
-  }).meta(meta);
+  }).meta(meta).readOnly();
   /*
   if (options.async) {
     return asyncHasMany(type, options, meta);

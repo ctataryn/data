@@ -112,6 +112,7 @@ test("A serializer can materialize a hasMany as an opaque token that can be lazi
   })).then(async(function(comments) {
     equal(comments.get('isLoaded'), true, "comments are loaded");
     equal(comments.get('length'), 2, "comments have 2 length");
+    equal(comments.objectAt(0).get('body'), 'First', "comment loaded successfully");
   }));
 });
 
