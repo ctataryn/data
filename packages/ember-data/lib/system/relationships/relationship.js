@@ -105,8 +105,9 @@ Relationship.prototype = {
   getManyArray: function(isAsync) {
     if (isAsync) {
       var self = this;
+      var promise;
       if (this.hasManyLink && !this.hasFetchedLink){
-        return this.store.findHasMany(this.hasManyRecord, this.hasManyLink, this.belongsToType).then(function(records){
+        promise = this.store.findHasMany(this.hasManyRecord, this.hasManyLink, this.belongsToType).then(function(records){
           self.updateRecordsFromServer(records);
           self.hasFetchedLink = true;
           //TODO(Igor) try to abstract the isLoaded part
@@ -115,14 +116,14 @@ Relationship.prototype = {
         });
       } else {
         var manyArray = this.manyArray;
-        var promise = this.store.findMany(manyArray.toArray()).then(function(){
+        promise = this.store.findMany(manyArray.toArray()).then(function(){
           self.manyArray.set('isLoaded', true);
           return manyArray;
         });
-        return PromiseArray.create({
-          promise: promise
-        });
       }
+      return PromiseArray.create({
+        promise: promise
+      });
     } else {
       this.manyArray.set('isLoaded', true);
       return this.manyArray;
