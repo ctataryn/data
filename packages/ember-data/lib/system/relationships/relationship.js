@@ -95,6 +95,23 @@ Relationship.prototype = {
       //TODO(Igor) assert that we actually have it
       return record;
     }
+  },
+
+  getManyArray: function(isAsync) {
+    return this.manyArray;
+  },
+
+  //for hasMany only
+  updateData: function(data, key){
+    var delta = this.computeChanges(data[key]);
+
+    if (data.links && data.links[key]){
+      this.hasManyLink = data.links[key];
+    }
+    //inverse = record.inverseFor(key);
+    this.addRecords(delta.added);
+    this.removeRecords(delta.removed);
+
   }
 };
 

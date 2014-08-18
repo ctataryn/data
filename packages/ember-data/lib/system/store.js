@@ -1983,15 +1983,16 @@ function setupRelationships(store, record, data, inverseRecord) {
   var type = record.constructor;
 
   type.eachRelationship(function(key, descriptor) {
-  var kind = descriptor.kind,
+    var kind = descriptor.kind,
         value = data[key] || inverseRecord,
-        relationship,
         inverse, currentValue;
+
+    var relationship = record._relationships[key];
 
     if (kind === 'belongsTo') {
       inverse = record.inverseFor(key);
-      if (record._relationships[key]){
-        currentValue = record._relationships[key].getOtherSideFor(record);
+      if (relationship){
+        currentValue = relationship.getOtherSideFor(record);
       }
 
       //TODO(IGOR_ASK) Null vs undefined??
@@ -1999,8 +2000,8 @@ function setupRelationships(store, record, data, inverseRecord) {
         return;
       }
 
-      if (record._relationships[key]){
-        record._relationships[key].removeAllRecords();
+      if (relationship){
+        relationship.removeAllRecords();
       }
 
       //We are adding data
@@ -2022,13 +2023,11 @@ function setupRelationships(store, record, data, inverseRecord) {
         record._relationships[key].addRecord(record, value);
       }
     } else if (kind === 'hasMany') {
-      relationship = createRelationshipFor(record, descriptor, store);
-      var delta = relationship.computeChanges(data[key]);
+      if (!relationship) {
+        relationship = createRelationshipFor(record, descriptor, store);
+      }
 
-      inverse = record.inverseFor(key);
-
-      relationship.addRecords(delta.added);
-      relationship.removeRecords(delta.removed);
+      relationship.updateData(data, key);
     }
   });
 }
