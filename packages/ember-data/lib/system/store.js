@@ -705,6 +705,23 @@ Store = Ember.Object.extend({
   },
 
   /**
+    @method findMany
+    @private
+    @param {DS.Model} owner
+    @param {Array} records
+    @param {String or subclass of DS.Model} type
+    @param {Resolver} resolver
+    @return {DS.ManyArray} records
+  */
+  findMany: function(records) {
+    var store = this;
+    return Promise.all( map(records, function(record) {
+      return store._findByRecord(record);
+    }));
+  },
+
+
+  /**
     If a relationship was originally populated by the adapter as a link
     (as opposed to a list of IDs), this method is called when the
     relationship is fetched.

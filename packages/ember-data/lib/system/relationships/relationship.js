@@ -111,11 +111,14 @@ Relationship.prototype = {
           return self.manyArray;
         });
       } else {
-        
+        var manyArray = this.manyArray;
+        var promise = this.store.findMany(manyArray.toArray()).then(function(){
+          return manyArray;
+        });
+        return PromiseArray.create({
+          promise: promise
+        });
       }
-      return PromiseArray.create({
-        promise: Ember.RSVP.resolve(this.manyArray)
-      });
     } else {
       return this.manyArray;
    }
