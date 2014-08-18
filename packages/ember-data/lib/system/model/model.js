@@ -632,14 +632,11 @@ var Model = Ember.Object.extend(Ember.Evented, {
   */
   clearRelationships: function() {
     this.eachRelationship(function(name, relationship) {
-      if (relationship.kind === 'belongsTo') {
-        set(this, name, null);
-      } else if (relationship.kind === 'hasMany') {
-        var hasMany = this._relationships[name];
-        if (hasMany) { // relationships are created lazily
-          hasMany.destroy();
-        }
+      var rel = this._relationships[name];
+      if (rel) { // relationships are created lazily
+        rel.destroy();
       }
+      this._relationships[name]  = null;
     }, this);
   },
 

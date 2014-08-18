@@ -1638,29 +1638,12 @@ function relationshipFor(kind, record, key, store) {
 
 function normalizeRelationships(store, type, data, record) {
   type.eachRelationship(function(key, relationship) {
-    // A link (usually a URL) was already provided in
-    // normalized form
-    if (data.links && data.links[key]) {
-      //TODO(Igor) be careful
-      //if (record && relationship.options.async) { record._relationships[key] = null; }
-      return;
-    }
-
     var kind = relationship.kind;
     var value = data[key];
-
-    if (value == null) {
-      if (kind === 'hasMany' && record) {
-        value = data[key] = record.get(key).toArray();
-      }
-      return;
-    }
-
     if (kind === 'belongsTo') {
       deserializeRecordId(store, data, key, relationship, value);
     } else if (kind === 'hasMany') {
       deserializeRecordIds(store, data, key, relationship, value);
-      addUnsavedRecords(record, key, value);
     }
   });
 
@@ -1693,6 +1676,9 @@ function typeFor(relationship, key, data) {
 }
 
 function deserializeRecordIds(store, data, key, relationship, ids) {
+  if (!Ember.isArray(ids)) {
+    return;
+  }
   for (var i=0, l=ids.length; i<l; i++) {
     deserializeRecordId(store, ids, i, relationship, ids[i]);
   }

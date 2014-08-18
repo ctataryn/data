@@ -189,6 +189,10 @@ OneToMany.prototype.removeRecord = function(record) {
   record.notifyBelongsToRemoved(this.belongsToName, this);
 };
 
+OneToMany.prototype.destroy = function() {
+  this.manyArray.destroy();
+};
+
 OneToMany.prototype.currentOtherSideFor = function(record) {
   return this.hasManyRecord;
 };
@@ -302,6 +306,11 @@ ManyToNone.prototype.removeRecord = function(record) {
   this.members.remove(record);
   this.hasManyRecord.notifyHasManyRemoved(this.manyName, record);
 };
+
+ManyToNone.prototype.destroy = function() {
+  this.manyArray.destroy();
+};
+
 
 function setForArray(array) {
   var set = new Ember.OrderedSet();
