@@ -13,7 +13,7 @@ module("integration/adapter/fixture_adapter - DS.FixtureAdapter", {
     });
 
     Phone = DS.Model.extend({
-      person: DS.belongsTo('person')
+      person: DS.belongsTo('person', { async: true})
     });
 
     env = setupStore({ person: Person, phone: Phone, adapter: DS.FixtureAdapter });
@@ -220,10 +220,9 @@ test("should coerce belongsTo ids into string", function() {
   }];
 
   env.store.find('phone', 1).then(async(function(result) {
-    var person = get(result, 'person');
-    person.one('didLoad', async(function() {
-      strictEqual(get(result, 'person.id'), "1", "should load integer belongsTo id as string");
-      strictEqual(get(result, 'person.firstName'), "Adam", "resolved relationship with an integer belongsTo id");
+    get(result, 'person').then(async(function(person) {
+      strictEqual(get(person, 'id'), "1", "should load integer belongsTo id as string");
+      strictEqual(get(person, 'firstName'), "Adam", "resolved relationship with an integer belongsTo id");
     }));
   }));
 });
