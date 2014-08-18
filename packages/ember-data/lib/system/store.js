@@ -722,15 +722,13 @@ Store = Ember.Object.extend({
     @param {String or subclass of DS.Model} type
     @return {Promise} promise
   */
-  findHasMany: function(owner, link, relationship, resolver) {
+  findHasMany: function(owner, link, type) {
     var adapter = this.adapterFor(owner.constructor);
 
     Ember.assert("You tried to load a hasMany relationship but you have no adapter (for " + owner.constructor + ")", adapter);
     Ember.assert("You tried to load a hasMany relationship from a specified `link` in the original payload but your adapter does not implement `findHasMany`", adapter.findHasMany);
 
-    var records = this.recordArrayManager.createManyArray(relationship.type, Ember.A([]));
-    resolver.resolve(_findHasMany(adapter, this, owner, link, relationship));
-    return records;
+    return _findHasMany(adapter, this, owner, link, type);
   },
 
   /**
@@ -1803,23 +1801,23 @@ function _findMany(adapter, store, type, ids, records) {
   }, null, "DS: Extract payload of " + type);
 }
 
-function _findHasMany(adapter, store, record, link, relationship) {
-  var promise = adapter.findHasMany(store, record, link, relationship);
-  var serializer = serializerForAdapter(adapter, relationship.type);
-  var label = "DS: Handle Adapter#findHasMany of " + record + " : " + relationship.type;
+function _findHasMany(adapter, store, record, link, type) {
+  var promise = adapter.findHasMany(store, record, link);
+  var serializer = serializerForAdapter(adapter, type);
+  var label = "DS: Handle Adapter#findHasMany of " + record + " : " + type;
 
   promise = Promise.cast(promise, label);
   promise = _guard(promise, _bind(_objectIsAlive, store));
   promise = _guard(promise, _bind(_objectIsAlive, record));
 
   return promise.then(function(adapterPayload) {
-    var payload = serializer.extract(store, relationship.type, adapterPayload, null, 'findHasMany');
+    var payload = serializer.extract(store, type, adapterPayload, null, 'findHasMany');
 
     Ember.assert("The response from a findHasMany must be an Array, not " + Ember.inspect(payload), Ember.typeOf(payload) === 'array');
 
-    var records = store.pushMany(relationship.type, payload);
-    record.updateHasMany(relationship.key, records);
-  }, null, "DS: Extract payload of " + record + " : hasMany " + relationship.type);
+    var records = store.pushMany(type, payload);
+    return records;
+  }, null, "DS: Extract payload of " + record + " : hasMany " + type);
 }
 
 function _findBelongsTo(adapter, store, record, link, relationship) {

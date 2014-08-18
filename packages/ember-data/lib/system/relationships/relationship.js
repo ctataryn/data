@@ -13,6 +13,7 @@ var Relationship = function(hasManyRecord, manyType, store, belongsToName, manyN
 
 Relationship.prototype = {
   constructor: Relationship,
+  hasFetchedLink: false,
 
   //TODO(Igor) implement
   destroy: function(){
@@ -100,6 +101,18 @@ Relationship.prototype = {
 
   getManyArray: function(isAsync) {
     if (isAsync) {
+      if (this.hasManyLink && !this.hasFetchedLink){
+        var self = this;
+        return this.store.findHasMany(this, this.hasManyLink, this.manyType).then(function(records){
+          self.updateRecordsFromServer(records);
+          self.hasFetchedLink = true;
+          //TODO(Igor) try to abstract the isLoaded part
+          self.manyArray.set('isLoaded', true);
+          return self.manyArray;
+        });
+      } else {
+        
+      }
       return PromiseArray.create({
         promise: Ember.RSVP.resolve(this.manyArray)
       });
@@ -108,17 +121,25 @@ Relationship.prototype = {
    }
   },
 
-  //for hasMany only
-  updateData: function(data, key){
-    var delta = this.computeChanges(data[key]);
-
-    if (data.links && data.links[key]){
-      this.hasManyLink = data.links[key];
-    }
-    //inverse = record.inverseFor(key);
+  updateRecordsFromServer: function(records) {
+    //TODO Keep the newlyCreated records
+    var delta = this.computeChanges(records);
     this.addRecords(delta.added);
     this.removeRecords(delta.removed);
+  },
 
+  //for hasMany only
+  updateData: function(data, key){
+    if (data.links && data.links[key]) {
+      var link = data.links[key];
+      if (link !== this.hasManyLink){
+        this.hasManyLink = data.links[key];
+        this.hasFetchedLink = false;
+      }
+    }
+    if (data[key]){
+      this.updateRecordsFromServer(data[key]);
+    }
   }
 };
 

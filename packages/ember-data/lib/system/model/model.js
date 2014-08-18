@@ -319,6 +319,7 @@ var Model = Ember.Object.extend(Ember.Evented, {
     @param {String} relationshipName the name of the relationship to fetch
   */
   fetch: function(relationshipName) {
+    console.log("ttrrrrr");
     var relationship = this.relationshipFor(relationshipName),
         kind = relationship.kind;
 

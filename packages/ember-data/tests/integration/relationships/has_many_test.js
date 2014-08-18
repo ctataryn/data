@@ -98,9 +98,7 @@ test("A serializer can materialize a hasMany as an opaque token that can be lazi
     throw new Error("Adapter's findMany should not be called");
   };
 
-  env.adapter.findHasMany = function(store, record, link, relationship) {
-    equal(relationship.type, Comment, "findHasMany relationship type was Comment");
-    equal(relationship.key, 'comments', "findHasMany relationship key was comments");
+  env.adapter.findHasMany = function(store, record, link) {
     equal(link, "/posts/1/comments", "findHasMany link was /posts/1/comments");
 
     return Ember.RSVP.resolve([
