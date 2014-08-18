@@ -844,7 +844,8 @@ var Model = Ember.Object.extend(Ember.Evented, {
 
     this.eachRelationship(function(name, rel) {
       if (data.links && data.links[name]) { return; }
-      if (rel.options.async) { relationships[name] = null; }
+      //TODO(Igor) be careful
+      //if (rel.options.async) { relationships[name] = null; }
     });
 
     if (data) { this.pushedData(); }

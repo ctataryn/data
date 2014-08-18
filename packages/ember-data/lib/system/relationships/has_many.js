@@ -233,13 +233,18 @@ function hasMany(type, options) {
 
 Model.reopen({
   notifyHasManyAdded: function(key, record) {
-    var manyArray = get(this, key);
+    //TODO(Igor) factor out
+    var relationship = this._relationships[key];
+    var manyArray = relationship.manyArray;
     //TODO(Igor) double check with yehuda whether this is the correct method
     manyArray.addRecord(record);
   },
 
   notifyHasManyRemoved: function(key, record) {
-    var manyArray = get(this, key);
+    //TODO(Igor) factor out
+    var relationship = this._relationships[key];
+    var manyArray = relationship.manyArray;
+    //TODO(Igor) double check with yehuda whether this is the correct method
     manyArray.removeRecord(record);
   }
 });

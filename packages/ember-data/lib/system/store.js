@@ -1625,7 +1625,8 @@ function normalizeRelationships(store, type, data, record) {
     // A link (usually a URL) was already provided in
     // normalized form
     if (data.links && data.links[key]) {
-      if (record && relationship.options.async) { record._relationships[key] = null; }
+      //TODO(Igor) be careful
+      //if (record && relationship.options.async) { record._relationships[key] = null; }
       return;
     }
 

@@ -101,7 +101,7 @@ Relationship.prototype = {
   getManyArray: function(isAsync) {
     if (isAsync) {
       return PromiseArray.create({
-        promise: Ember.RSVP.cast(this.manyArray)
+        promise: Ember.RSVP.resolve(this.manyArray)
       });
     } else {
       return this.manyArray;
