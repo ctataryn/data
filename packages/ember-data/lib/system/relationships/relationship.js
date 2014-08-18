@@ -1,4 +1,4 @@
-import { PromiseArray } from "ember-data/system/promise_proxies";
+import { PromiseArray, PromiseObject } from "ember-data/system/promise_proxies";
 
 var Relationship = function(hasManyRecord, manyType, store, belongsToName, manyName) {
 
@@ -91,11 +91,17 @@ Relationship.prototype = {
   },
 
   getRecord: function(record, isAsync) {
-    if (!record){
-      return null;
-    }
     if (isAsync) {
-      return this.store._findByRecord(record);
+      var promise;
+      if (record) {
+        promise = this.store._findByRecord(record);
+      } else {
+        promise = Ember.RSVP.resolve(null);
+      }
+
+      return PromiseObject.create({
+        promise: promise
+      });
     } else {
       //TODO(Igor) assert that we actually have it
       return record;
