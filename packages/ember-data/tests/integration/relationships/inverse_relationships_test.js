@@ -344,9 +344,9 @@ test("When a record's belongsTo relationship is set, it can specify the inverse 
 
 test("When a record's polymorphic belongsTo relationship is set, it can specify the inverse hasMany to which the new child should be added", function() {
   Message = DS.Model.extend({
-    meMessages: DS.hasMany('comment'),
-    youMessages: DS.hasMany('comment'),
-    everyoneWeKnowMessages: DS.hasMany('comment')
+    meMessages: DS.hasMany('comment', {inverse: null}),
+    youMessages: DS.hasMany('comment', {inverse: 'message'}),
+    everyoneWeKnowMessages: DS.hasMany('comment', {inverse: null})
   });
 
   Post = Message.extend();
@@ -381,27 +381,38 @@ test("When a record's polymorphic belongsTo relationship is set, it can specify 
   equal(post.get('everyoneWeKnowMessages.length'), 0, "everyoneWeKnowMessages has no posts");
 });
 
-test("Inverse relationships that don't exist throw a nice error", function () {
+test("Inverse relationships that don't exist throw a nice error for a hasMany", function () {
   User = DS.Model.extend();
   Comment = DS.Model.extend();
 
   Post = DS.Model.extend({
-    comments: DS.hasMany(Comment, { inverse: 'testPost' }),
+    comments: DS.hasMany(Comment, { inverse: 'testPost' })
+  });
+
+  var env = setupStore({ post: Post, comment: Comment, user: User });
+  var comment = env.store.createRecord('comment');
+
+  expectAssertion(function() {
+    var post = env.store.createRecord('post');
+  }, /We found no inverse relationships by the name of 'testPost' on the 'comment' model/);
+
+});
+
+test("Inverse relationships that don't exist throw a nice error for a belongsTo", function () {
+  User = DS.Model.extend();
+  Comment = DS.Model.extend();
+
+  Post = DS.Model.extend({
     user: DS.belongsTo(User, { inverse: 'testPost' })
   });
 
   var env = setupStore({ post: Post, comment: Comment, user: User });
-  var post = env.store.createRecord('post');
   var user = env.store.createRecord('user');
-  var comment = env.store.createRecord('comment');
 
   expectAssertion(function() {
-    post.set('user', user);
+    var post = env.store.createRecord('post');
   }, /We found no inverse relationships by the name of 'testPost' on the 'user' model/);
 
-  expectAssertion(function() {
-    post.get('comments').addRecord(comment);
-  }, /We found no inverse relationships by the name of 'testPost' on the 'comment' model/);
 });
 
 
