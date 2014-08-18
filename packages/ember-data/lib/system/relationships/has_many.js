@@ -232,12 +232,12 @@ function hasMany(type, options) {
 }
 
 Model.reopen({
-  notifyHasManyAdded: function(key, record) {
+  notifyHasManyAdded: function(key, record, idx) {
     //TODO(Igor) factor out
     var relationship = this._relationships[key];
     var manyArray = relationship.manyArray;
     //TODO(Igor) double check with yehuda whether this is the correct method
-    manyArray.addRecord(record);
+    manyArray.addRecord(record, idx);
   },
 
   notifyHasManyRemoved: function(key, record) {

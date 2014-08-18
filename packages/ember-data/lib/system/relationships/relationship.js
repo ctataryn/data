@@ -61,10 +61,13 @@ Relationship.prototype = {
     });
   },
 
-  addRecords: function(records){
+  addRecords: function(records, idx){
     var that = this;
     records.forEach(function(record){
-      that.addRecord(record);
+      that.addRecord(record, idx);
+      if (idx !== undefined) {
+        idx++;
+      }
     });
   },
 
@@ -126,6 +129,7 @@ Relationship.prototype = {
 
   updateRecordsFromServer: function(records) {
     //TODO Keep the newlyCreated records
+    //TODO(Igor) Think about the ordering
     var delta = this.computeChanges(records);
     this.addRecords(delta.added);
     this.removeRecords(delta.removed);
@@ -159,12 +163,12 @@ var OneToMany = function(hasManyRecord, manyType, store, belongsToName, manyName
 OneToMany.prototype = Object.create(Relationship.prototype);
 
 OneToMany.prototype.constructor = OneToMany;
-OneToMany.prototype.addRecord = function(record) {
+OneToMany.prototype.addRecord = function(record, idx) {
       Ember.assert("You cannot add '" + record.constructor.typeKey + "' records to this relationship (only '" + this.belongsToType.typeKey + "' allowed)", !this.belongsToType || record instanceof this.belongsToType);
 
   //TODO(Igor) Consider making the many array just a proxy over the members set
   this.members.add(record);
-  this.hasManyRecord.notifyHasManyAdded(this.manyName, record);
+  this.hasManyRecord.notifyHasManyAdded(this.manyName, record, idx);
   record.notifyBelongsToAdded(this.belongsToName, this);
 };
 
@@ -277,10 +281,10 @@ var ManyToNone = function(hasManyRecord, manyType, store, belongsToName, manyNam
 ManyToNone.prototype = Object.create(Relationship.prototype);
 ManyToNone.constructor = ManyToNone;
 
-ManyToNone.prototype.addRecord = function(record) {
+ManyToNone.prototype.addRecord = function(record, idx) {
   //TODO(Igor) Consider making the many array just a proxy over the members set
   this.members.add(record);
-  this.hasManyRecord.notifyHasManyAdded(this.manyName, record);
+  this.hasManyRecord.notifyHasManyAdded(this.manyName, record, idx);
 };
 
 ManyToNone.prototype.removeRecord = function(record) {

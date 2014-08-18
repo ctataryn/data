@@ -127,13 +127,13 @@ export default RecordArray.extend({
       this.get('relationship').removeRecords(records);
     }
     if (objects){
-      this.get('relationship').addRecords(objects);
+      this.get('relationship').addRecords(objects, idx);
     }
   },
 
-  arrangedContentDidChange: function(index, removed, added) {
-    var records = get(this, 'content').slice(index, index+added);
-    this.get('relationship').addRecords(records);
+  arrangedContentDidChange: function(idx, removed, added) {
+    var records = get(this, 'content').slice(idx, idx+added);
+    this.get('relationship').addRecords(records, idx);
     //this._super.apply(this, arguments);
   },
 
