@@ -1091,6 +1091,7 @@ Store = Ember.Object.extend({
     if (data) {
       // normalize relationship IDs into records
       data = normalizeRelationships(this, record.constructor, data, record);
+      setupRelationships(this, record, data);
 
       this.updateId(record, data);
     }

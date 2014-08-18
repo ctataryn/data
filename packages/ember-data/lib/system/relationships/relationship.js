@@ -141,9 +141,11 @@ Relationship.prototype = {
   updateData: function(data, key){
     if (data.links && data.links[key]) {
       var link = data.links[key];
-      if (link !== this.hasManyLink){
+      if (link !== this.hasManyLink) {
         this.hasManyLink = data.links[key];
         this.hasFetchedLink = false;
+        //Need to clear out the whole manyArray becase the link changed
+        this.hasManyRecord.notifyPropertyChange(key);
       }
     }
     if (data[key]){

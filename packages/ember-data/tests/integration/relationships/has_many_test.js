@@ -116,6 +116,7 @@ test("A serializer can materialize a hasMany as an opaque token that can be lazi
   }));
 });
 
+//TODO(Igor) confer with tomhuda about what the exact behaviour should be re:promises
 test("An updated `links` value should invalidate a relationship cache", function() {
   Post.reopen({
     comments: DS.hasMany('comment', { async: true })
@@ -126,9 +127,7 @@ test("An updated `links` value should invalidate a relationship cache", function
     return Ember.RSVP.resolve({ id: 1, links: { comments: "/posts/1/comments" } });
   };
 
-  env.adapter.findHasMany = function(store, record, link, relationship) {
-    equal(relationship.type, Comment, "findHasMany relationship type was Comment");
-    equal(relationship.key, 'comments', "findHasMany relationship key was comments");
+  env.adapter.findHasMany = function(store, record, link) {
     equal(link, "/posts/1/comments", "findHasMany link was /posts/1/comments");
 
     return Ember.RSVP.resolve([
